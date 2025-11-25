@@ -6,6 +6,11 @@ from matplotlib import pyplot as plt
 from datetime import date
 import os
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.model_selection import train_test_split
+import json
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -65,11 +70,11 @@ if not os.path.exists(output_dir):
 
 # Define Standard Colors
 COUNTRY_COLORS = {
-    'China': 'tab:red',
-    'United States': 'tab:blue',
-    'Germany': 'gold', # Yellow can be hard to see, gold is better
-    'Russia': 'tab:purple',
-    'Turkey': 'tab:orange'
+    'China': '#E74C3C',        # Red
+    'United States': '#3498DB', # Blue
+    'Germany': '#F1C40F',       # Yellow
+    'Russia': '#8E44AD',        # Purple
+    'Turkey': '#E67E22'         # Orange
 }
 
 # 1. General CO2 Increase Over Years
@@ -134,26 +139,102 @@ def predict_co2(data, country_name=None):
     
     if len(df_train) < 5:
         print(f"Not enough data for {title_suffix}")
-        return None, None, None, None # Fixed unpacking error
+        return None, None, None, None, None, None # Fixed unpacking error
 
+    # Use Polynomial Regression (Degree 2) to capture non-linear trends
     X = df_train[['year']]
     y = df_train['co2']
     
+    poly = PolynomialFeatures(degree=2)
+    X_poly = poly.fit_transform(X)
+    
     model = LinearRegression()
-    model.fit(X, y)
+    model.fit(X_poly, y)
     
     # Predict for next 6 years (2025-2030)
     future_years = np.arange(2025, 2031).reshape(-1, 1)
-    predictions = model.predict(future_years)
+    future_years_poly = poly.transform(future_years)
+    predictions = model.predict(future_years_poly)
     
-    return df_train, future_years, predictions, model
+    # Calculate Confidence Intervals
+    # 1. Calculate MSE
+    y_pred_train = model.predict(X_poly)
+    mse = np.sum((y - y_pred_train) ** 2) / (len(y) - X_poly.shape[1])
+    
+    # 2. Calculate (X^T X)^-1
+    xtx_inv = np.linalg.inv(np.dot(X_poly.T, X_poly))
+    
+    # 3. Calculate Variance for each future point
+    # Var = MSE * (x_new^T * (X^T X)^-1 * x_new) for Confidence Interval (Mean)
+    # Var = MSE * (1 + x_new^T * (X^T X)^-1 * x_new) for Prediction Interval (Data)
+    # We use Confidence Interval for the trend line uncertainty
+    
+    ci_lower = []
+    ci_upper = []
+    
+    import scipy.stats as stats
+    t_score = stats.t.ppf(0.975, df=len(y) - X_poly.shape[1]) # 95% CI
+    
+    for i in range(len(future_years_poly)):
+        x_new = future_years_poly[i]
+        var = mse * np.dot(np.dot(x_new, xtx_inv), x_new.T)
+        se = np.sqrt(var)
+        margin = t_score * se
+        ci_lower.append(predictions[i] - margin)
+        ci_upper.append(predictions[i] + margin)
+        
+    return df_train, future_years, predictions, model, np.array(ci_lower), np.array(ci_upper)
+
+def evaluate_model(data):
+    print("\n--- Model Evaluation (Global CO2) ---")
+    # Prepare Global Data
+    df_subset = data.groupby('year')['co2'].mean().reset_index()
+    df_train_full = df_subset[(df_subset['year'] >= 2000) & (df_subset['year'] <= 2024)].dropna(subset=['co2'])
+    
+    X = df_train_full[['year']]
+    y = df_train_full['co2']
+    
+    # Split 80/20
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Train Model
+    model = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
+    model.fit(X_train, y_train)
+    
+    # Predict
+    y_pred = model.predict(X_test)
+    
+    # Calculate Metrics
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    print(f"RMSE: {rmse:.4f}")
+    print(f"MAE: {mae:.4f}")
+    print(f"R2 Score: {r2:.4f}")
+    
+    metrics = {
+        "rmse": rmse,
+        "mae": mae,
+        "r2": r2,
+        "train_split": 0.8,
+        "test_split": 0.2
+    }
+    
+    with open("metrics.json", "w") as f:
+        json.dump(metrics, f)
+    print("Metrics saved to metrics.json")
+
+# Evaluate Model first
+evaluate_model(df)
 
 # Global Prediction
-df_train_global, future_years, pred_global, model_global = predict_co2(df)
+df_train_global, future_years, pred_global, model_global, ci_lower_global, ci_upper_global = predict_co2(df)
 
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=df_train_global, x='year', y='co2', label='Historical (2000-2024)', color='black')
 plt.plot(future_years, pred_global, color='red', linestyle='--', label='Prediction (2025-2030)')
+plt.fill_between(future_years.flatten(), ci_lower_global, ci_upper_global, color='red', alpha=0.2, label='95% Confidence Interval')
 plt.title('Global CO2 Emissions Forecast')
 plt.ylabel('CO2 Emissions (Million Tonnes)')
 plt.xlabel('Year')
@@ -165,16 +246,23 @@ print(f"Saved {output_dir}/global_forecast.png")
 # Country Predictions
 plt.figure(figsize=(14, 7))
 for country in countries:
-    df_train, future_years, preds, model = predict_co2(df, country)
+    df_train, future_years, preds, model, ci_lower, ci_upper = predict_co2(df, country)
     if preds is not None:
         # Plotting historical tail and prediction
         color = COUNTRY_COLORS.get(country, 'gray')
         plt.plot(df_train['year'], df_train['co2'], label=f'{country} Historical', color=color, alpha=0.6)
         plt.plot(future_years, preds, linestyle='--', label=f'{country} Prediction', color=color, linewidth=2)
+        plt.fill_between(future_years.flatten(), ci_lower, ci_upper, color=color, alpha=0.1)
         
         # Trend Analysis
-        trend = "Increasing" if model.coef_[0] > 0 else "Decreasing"
-        print(f"{country}: Trend is {trend} (Slope: {model.coef_[0]:.2f})")
+        # Trend Analysis
+        # For polynomial, we can check the difference between last prediction and last historical data, or the slope at the end
+        # Simple approach: Check if 2030 prediction > 2024 data (or last available)
+        last_hist = df_train['co2'].iloc[-1]
+        last_pred = preds[-1]
+        
+        trend = "Increasing" if last_pred > last_hist else "Decreasing"
+        print(f"{country}: Trend is {trend} (2030 Pred: {last_pred:.2f} vs Last Hist: {last_hist:.2f})")
 
 plt.title('CO2 Emissions Forecast by Country (2025-2030)')
 plt.ylabel('CO2 Emissions (Million Tonnes)')
@@ -390,6 +478,7 @@ if existing_fuel_cols:
     
     # Get data for the last year for each country
     last_year_data = []
+    years_used = []
     
     for country in countries:
         country_df = df[df['country'] == country].sort_values('year')
@@ -398,9 +487,17 @@ if existing_fuel_cols:
             valid_row = country_df.dropna(subset=existing_fuel_cols).tail(1)
             if not valid_row.empty:
                 last_year_data.append(valid_row)
+                years_used.append(valid_row['year'].iloc[0])
     
     if last_year_data:
         df_fuel = pd.concat(last_year_data)
+        
+        # Determine the year label
+        unique_years = sorted(list(set(years_used)))
+        if len(unique_years) == 1:
+            year_label = str(unique_years[0])
+        else:
+            year_label = f"{min(unique_years)}-{max(unique_years)}"
         
         # Calculate percentage share
         # Note: These columns are usually absolute values (tonnes). We need to sum them to get total fossil CO2 (or use total co2 if we want share of total)
@@ -416,7 +513,7 @@ if existing_fuel_cols:
         
         plot_data.plot(kind='bar', stacked=True, figsize=(12, 7), colormap='viridis')
         
-        plt.title(f'Fossil Fuel CO2 Emission Mix (Most Recent Data)')
+        plt.title(f'Fossil Fuel CO2 Emission Mix (Year Used: {year_label})')
         plt.ylabel('Percentage Share (%)')
         plt.xlabel('Country')
         plt.legend(title='Fuel Source', bbox_to_anchor=(1.05, 1), loc='upper left')
