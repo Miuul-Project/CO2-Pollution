@@ -2,13 +2,13 @@
 
 ## 👥 Project Members
 
-| Name | Linkedin | GitHub | Website |
-|------|----------|--------|---------|
-| Alican Kaya | [Linkedin](https://www.linkedin.com/in/alican-kaya-881650234/) | [GitHub](https://github.com/AlicanKaya192) | [Website](https://alican-kaya.com/) |
-| Sude Şenol | [Linkedin](http://www.linkedin.com/in/sude-%C5%9Fenol) | [GitHub](https://github.com/sudesenoll) | — |
-| Zülal Özge | [Linkedin](https://www.linkedin.com/in/z%C3%BClal-%C3%B6zge-687488333) | [GitHub](https://github.com/zulalozge) | — |
-| Hasret Erdoğan | [Linkedin](https://www.linkedin.com/in/hasret-erdoğan-5b463b278) | [GitHub](https://github.com/hasreterdogan) | — |
-| Duru Bağdadioğlu | [Linkedin]([https://www.linkedin.com/in/hasret-erdoğan-5b463b278](https://www.linkedin.com/in/duru-ba%C4%9Fdadio%C4%9Flu/)) | [GitHub]([https://github.com/hasreterdogan](https://github.com/durubagdadioglu)) | — |
+| Name             | Linkedin                                                          | GitHub                                     | Website                    |
+|------------------|--------------------------------------------------------------------|---------------------------------------------|----------------------------|
+| Alican Kaya      | [Linkedin](https://www.linkedin.com/in/alican-kaya-881650234/)     | [GitHub](https://github.com/AlicanKaya192) | [Website](https://alican-kaya.com/) |
+| Sude Şenol       | [Linkedin](http://www.linkedin.com/in/sude-%C5%9Fenol)             | [GitHub](https://github.com/sudesenoll)    | —                          |
+| Zülal Özge       | [Linkedin](https://www.linkedin.com/in/z%C3%BClal-%C3%B6zge-687488333) | [GitHub](https://github.com/zulalozge)     | —                          |
+| Hasret Erdoğan   | [Linkedin](https://www.linkedin.com/in/hasret-erdoğan-5b463b278)   | [GitHub](https://github.com/hasreterdogan)  | —                          |
+| Duru Bağdadioğlu | [Linkedin](https://www.linkedin.com/in/duru-ba%C4%9Fdadio%C4%9Flu/) | [GitHub](https://github.com/durubagdadioglu) | —                        |
 
 ---
 
