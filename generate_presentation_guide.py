@@ -1,207 +1,171 @@
 from fpdf import FPDF
-import os
+import datetime
 
-# Helper for Turkish chars
-def tr(text):
-    mapping = {
-        'ğ': 'g', 'Ğ': 'G',
-        'ş': 's', 'Ş': 'S',
-        'ı': 'i', 'İ': 'I',
-        'ç': 'c', 'Ç': 'C',
-        'ö': 'o', 'Ö': 'O',
-        'ü': 'u', 'Ü': 'U'
-    }
-    for k, v in mapping.items():
-        text = text.replace(k, v)
-    return text.encode('latin-1', 'replace').decode('latin-1')
-
-class PDF(FPDF):
+class GuidePDF(FPDF):
     def header(self):
-        self.set_font('Arial', 'B', 15)
-        self.cell(0, 10, tr('Nature Pollution - Analiz Raporu Sunum Rehberi'), 0, 1, 'C')
+        self.set_font('Arial', 'B', 16)
+        self.set_text_color(44, 62, 80) # Dark Blue
+        self.cell(0, 10, 'CO2 ANALIZI - AKIS YONETIMI & KOPYA KAGIDI', 0, 1, 'C')
+        self.set_font('Arial', 'I', 10)
+        self.cell(0, 5, 'Rapor Bolumlerine Gore Teknik Detaylar ve Sunum Notlari', 0, 1, 'C')
+        self.ln(5)
+        self.set_draw_color(44, 62, 80)
+        self.line(10, 25, 200, 25)
         self.ln(10)
 
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, tr(f'Sayfa {self.page_no()}'), 0, 0, 'C')
+        self.cell(0, 10, f'Sayfa {self.page_no()}', 0, 0, 'C')
 
-    def chapter_title(self, title):
+    def section_header(self, title):
+        self.set_fill_color(52, 152, 219) # Blue Background
+        self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', 12)
-        self.set_fill_color(200, 220, 255)
-        self.cell(0, 10, tr(title), 0, 1, 'L', 1)
-        self.ln(4)
+        self.cell(0, 8, title, 0, 1, 'L', 1)
+        self.ln(3)
 
-    def chapter_body(self, body):
-        self.set_font('Arial', '', 10)
-        self.multi_cell(0, 6, tr(body))
-        self.ln()
+    def content_block(self, title, content):
+        self.set_font('Arial', 'B', 10)
+        self.set_text_color(192, 57, 43) # Red for headers
+        self.cell(0, 5, title, 0, 1, 'L')
+        
+        self.set_font('Arial', '', 9)
+        self.set_text_color(0, 0, 0)
+        self.multi_cell(0, 4, content)
+        self.ln(2)
 
-def create_presentation_guide():
-    pdf = PDF()
+    def tech_box(self, content):
+        self.set_fill_color(236, 240, 241) # Light Grey
+        self.set_draw_color(189, 195, 199)
+        self.set_font('Courier', '', 8)
+        self.set_text_color(0, 0, 0)
+        self.cell(0, 1, "", 0, 1) # margin
+        self.multi_cell(0, 4, content, 1, 'L', 1)
+        self.ln(3)
+
+def create_guide():
+    pdf = GuidePDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    pdf.set_font('Arial', '', 12)
 
-    pdf.chapter_body(
-        "Bu rehber, 'CO2_Analiz_Raporu.pdf' dosyasını sunarken kullanacağınız hazır konuşma metinlerini ve "
-        "teknik açıklamaları içerir. 'Sunum Notu' kısımlarını doğrudan okuyabilir veya ezberleyebilirsiniz."
-    )
+    # TR Character Helper
+    def tr(text):
+        mapping = {
+            'ğ': 'g', 'Ğ': 'G', 'ş': 's', 'Ş': 'S',
+            'ı': 'i', 'İ': 'I', 'ç': 'c', 'Ç': 'C',
+            'ö': 'o', 'Ö': 'O', 'ü': 'u', 'Ü': 'U'
+        }
+        for k, v in mapping.items():
+            text = text.replace(k, v)
+        return text.encode('latin-1', 'replace').decode('latin-1')
 
-    # 0. Veri Hikayesi
-    pdf.chapter_title("Giriş: Veri Hikayesi ve Değişkenler")
-    pdf.chapter_body(
-        "Sunum Notu: Analizimize başlamadan önce, kullandığımız verinin hikayesinden bahsetmek istiyorum. "
-        "Verilerimiz, 'Our World in Data' platformundan alınmıştır ve Sanayi Devrimi'nden günümüze kadar olan süreci kapsar. "
-        "Biz bu çalışmada, sadece CO2'yi değil, onu etkileyen Nüfus, GSYİH ve Enerji Tüketimi gibi değişkenleri de inceledik. "
-        "Amacımız sadece 'ne kadar kirlendiğimizi' değil, 'neden kirlendiğimizi' anlamaktır.\n"
-        "Teknoloji: Domain Knowledge (Alan Bilgisi).\n"
-        "Neden?: İzleyiciye bağlamı (context) vermek için."
-    )
+    # 1. YONETICI OZETI
+    pdf.section_header(tr("1. YONETICI OZETI"))
+    pdf.content_block(tr("SUNUM METNI (OKUYABILIRSINIZ)"), 
+                      tr("Sayin Juri, bu calisma 1990 ile 2024 yillari arasindaki kuresel Karbondioksit emisyonlarini inceleyen kapsamli bir veri bilimi projesidir. Calismamizda sadece gecmis verileri analiz etmekle kalmadik, ayni zamanda makine ogrenimi modelleri kullanarak 2028 yilina kadar gelecege yonelik projeksiyonlar da olusturduk. Odak noktamiz, kuresel emisyonlarin %60'ini olusturan alti kritik ulke uzerinedir: Cin, ABD, Hindistan, Rusya, Almanya ve Turkiye."))
+    pdf.tech_box(tr("TEKNIK KUNYE:\n"
+                    "- Kutuphaneler: Pandas, NumPy, Scikit-learn, FPDF\n"
+                    "- Veri Kapsami: 1990-2024 (Egitim/Analiz), 2025-2028 (Tahmin)\n"
+                    "- Veri Boyutu: 60.000+ satir, 12 nitelik (feature)\n"
+                    "- Veri Yapis: Panel Data (Long Format)"))
 
-    # 1. Veri ve Metodoloji
-    pdf.chapter_title("Rapor Girişi: Veri ve Metodoloji")
-    pdf.chapter_body(
-        "Sunum Notu: Verilerimiz, uluslararası alanda güvenilirliği kabul görmüş 'Our World in Data' platformundan alınmıştır. "
-        "Bu veri seti, bilimsel çalışmalarda referans olarak kullanılan standart bir kaynaktır.\n"
-        "Teknoloji: Pandas kütüphanesi.\n"
-        "Neden?: Ham veri setinde eksik yıllar vardı. Pandas'ın 'interpolate()' fonksiyonunu kullanarak bu boşlukları doğrusal artış mantığıyla doldurduk. Böylece grafiklerde kopukluk olmadı."
-    )
+    # 2. GIRIS
+    pdf.section_header(tr("2. GIRIS VE HEDEFLER"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Gunumuzde atmosferik CO2 seviyeleri 420 ppm'i asarak kritik bir esige ulasmistir. Bu projenin temel amaci, 'Kanita Dayali' bir yaklasimla bu artisin altinda yatan ekonomik ve demografik nedenleri ortaya cikarmaktir. Geleneksel analizlerden farkli olarak, bu calismada 'Time-Safe' yani zaman guvenli algoritmalar gelistirerek cok daha gercekci sonuclar elde etmeyi hedefledik."))
 
-    # 2. Model Performansı
-    pdf.chapter_title("Rapor Bölümü: Model Performansı")
-    pdf.chapter_body(
-        "Sunum Notu: Modelimizin güvenilirliğini test etmek için veriyi Eğitim ve Test olarak ikiye ayırdık. "
-        "Elde ettiğimiz yüksek R2 skoru, modelin %90'ın üzerinde bir başarıyla gerçek hayat verilerini temsil ettiğini göstermektedir.\n"
-        "Teknoloji: Scikit-learn (R2 Score, RMSE).\n"
-        "Neden?: Tahmin yapmadan önce modeli test etmeliyiz. Veriyi 2000-2018 (Eğitim) ve 2019-2024 (Test) olarak ikiye böldük."
-    )
+    # 3. VERI HIKAYESI
+    pdf.section_header(tr("3. VERI HIKAYESI VE KAYNAKLAR"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Analizimizde Oxford Universitesi destekli 'Our World in Data' veri setini kullandik. Bu veri seti, Uluslararasi Enerji Ajansi ve Dunya Bankasi gibi guvenilir kaynaklarin birlestirilmesiyle olusturulmustur. Analiz surecinde ham veriyi alip, python tabanli bir veri temizleme hattindan gecirerek eksik verileri modern istatistiksel yontemlerle tamamladik."))
+    pdf.tech_box(tr("SORU: EKSIK VERILERI NASIL DOLDURDUNUZ?\n"
+                    "Cevap: 'Bilateral Interpolation' (IkI Yonlu Dogrusal Tamamlama) kullandik.\n"
+                    "- NEDEN?: Veriler zaman serisi oldugu icin 'ortalama' (mean) ile doldurmak trendi bozar. Interpolasyon ise trendi korur.\n"
+                    "- NASIL?: Pandas kutuphanesinin `interpolate(method='linear')` fonksiyonu ile."))
 
-    # 3. Küresel CO2 Tarihsel Gelişimi
-    pdf.chapter_title("1. Küresel CO2 Emisyonlarının Tarihsel Gelişimi")
-    pdf.chapter_body(
-        "Sunum Notu: Bu grafik, küresel ısınmanın duraksamadan devam ettiğini net bir şekilde ortaya koyuyor. "
-        "2000 yılından günümüze emisyonlardaki istikrarlı artış, sorunun küresel boyutunu gözler önüne seriyor.\n"
-        "Teknoloji: Matplotlib ve Seaborn (Lineplot).\n"
-        "Neden?: Karmaşık sayıları tek bir çizgiyle özetlemek için. Grafikteki yukarı yönlü eğim, küresel ısınmanın durmadığını kanıtlıyor."
-    )
+    # 4. METODOLOJI
+    pdf.section_header(tr("4. METODOLOJI (EN KRITIK BOLUM)"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Bu projenin en ozgun yani gelistirdigimiz 'Time-Safe' metodolojisidir. Zaman serisi verilerinde en buyuk risk, gelecek bilgisinin gecmise sizmasidir, buna 'Data Leakage' denir. Biz veriyi 2018 yilindan itibaren keserek Egitim ve Test seti olarak ayirdik. Test setindeki eksik verileri doldururken ASLA gelecek yillardan bilgi almadik, sadece gecmis yillari referans aldik. Boylece modelimizin gercek dunya performansini dogru sekilde oIctuk."))
+    pdf.tech_box(tr("SORU: TIME-SAFE YONTEMI NEDEN KULLANDINIZ?\n"
+                    "- NEDEN?: Standart yontemlerde 2020 verisini kullanarak 2019'u doldurmak (Backward Fill) modelin kopya cekmesine neden olur. Bu da basariyi sahte yukseltir.\n"
+                    "- NASIL?: Ozel yazdigimiz `_country_time_safe_impute` fonksiyonu ile Test setinde sadece 'Forward Fill' (Gecmisten ileriye tasima) yaptik. Asla gelecege bakmadik.\n\n"
+                    "SORU: NEDEN LINEER REGRESYON?\n"
+                    "- NEDEN?: Elimizdeki veri seti (60k satir) derin ogrenme (Deep Learning) icin kucuktur. Ayrica amacimiz 'Yorumlanabilirlik'tir. Hangi degiskenin (GSYIH mi Nufus mu) ne kadar etkiledigini gormek istedik.\n"
+                    "- NASIL?: `sklearn.linear_model.LinearRegression` algoritmasi ile."))
 
-    # 4. Ülke Bazlı Profiller
-    pdf.chapter_title("2. Ülke Bazlı Emisyon Profilleri")
-    pdf.chapter_body(
-        "Sunum Notu: Dünya genelini analiz etmek yerine stratejik öneme sahip 6 ülkeye odaklandık. "
-        "Çin'in son 20 yıldaki dik artışı ile ABD ve Avrupa'nın düşüş trendi, küresel dengelerin nasıl değiştiğini gösteriyor.\n"
-        "Teknoloji: Pandas Filtering & Grouping.\n"
-        "Neden?: Tüm dünyayı analiz etmek yerine stratejik 6 ülkeyi (Çin, ABD, Hindistan vb.) filtreledik. Bu sayede kıyaslama yapmak kolaylaştı."
-    )
+    # 5. TARIHSEL TRENDLER
+    pdf.section_header(tr("5. TARIHSEL TREND ANALIZI"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Grafige baktigimizda, 2020 yilinda pandeminin etkisiyle tarihin en buyuk emisyon dususunun yasandigini, ancak hemen ardindan V seklinde hizli bir toparlanma oldugunu goruyoruz. Ozellikle Cin'in 2000 sonrasi sanayilesme ile nasil dikey bir artis yasadigini, buna karsilik ABD'nin emisyonlarini nasil yavas yavas azalttigini gozlemleyebilirsiniz."))
+    pdf.tech_box(tr("GORSELLESTIRME DETAYI:\n"
+                    "- Kutuphane: Matplotlib & Seaborn (`sns.lineplot`)\n"
+                    "- NEDEN?: Zaman serisi trendlerini gostermenin en net yolu Cizgi Grafiktir."))
 
-    # 5. Korelasyon Analizi
-    pdf.chapter_title("3. Emisyon Sürücüleri: Korelasyon Analizi")
-    pdf.chapter_body(
-        "Sunum Notu: Isı haritamız, CO2 artışının en çok Nüfus ve GSYİH ile ilişkili olduğunu kanıtlıyor. "
-        "Kırmızı alanlar bu güçlü ilişkiyi temsil eder; yani nüfus ve ekonomi büyüdükçe emisyon kaçınılmaz olarak artıyor.\n"
-        "Teknoloji: Seaborn Heatmap (Isı Haritası).\n"
-        "Neden?: Değişkenler arasındaki ilişkiyi renklerle göstermek için. Bu analiz, tahmin modelimizde neden 'Nüfus' verisini kullandığımızı haklı çıkarır."
-    )
+    # 6. INTERAKTIF 3D GORSELLESTIRME
+    pdf.add_page()
+    pdf.section_header(tr("6. INTERAKTIF 3D GORSELLESTIRME"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Verileri daha iyi anlamlandirmak icin statik grafiklerin otesine gectik ve interaktif bir 3D dunya modeli gelistirdik. Bu modelde gordugunuz her nokta bir ulkeyi temsil ediyor. Noktalarin kirmiziya donmesi kirliligin arttigini, buyumesi ise hacmin genisledigini gosteriyor. Bu gorsellestirme, verilerdeki degisimi zamansal olarak izlememize olanak taniyor."))
+    pdf.tech_box(tr("SORU: RENKLENDIRME ALGORITMASI NASIL CALISIYOR?\n"
+                    "- NEDEN?: Sadece sayilari gostermek algiyi zorlastirir. Renk (Yesil->Kirmizi) tehlikeyi bilincaltina iteler.\n"
+                    "- NASIL?: `get_pollution_color(co2)` fonksiyonu yazdik. Bu fonksiyon CO2 degerini 0 ile 1 arasina normalize edip, RGB renk uzayinda enterpolasyon yapar."))
 
-    # 6. Gelecek Projeksiyonları
-    pdf.chapter_title("4. & 5. Gelecek Projeksiyonları (2025-2028)")
-    pdf.chapter_body(
-        "Sunum Notu: 2028 yılına kadar olan tahminlerimiz, kesik çizgilerle gösterilmiştir. "
-        "Modelimiz, mevcut politikalar değişmezse Çin ve Hindistan kaynaklı artışın devam edeceğini, ancak Batı'da düşüşün süreceğini öngörüyor.\n"
-        "Teknoloji: Scikit-learn Polynomial Regression (Polinom Regresyon).\n"
-        "Neden?: CO2 emisyonları düz bir çizgi (Lineer) şeklinde artmaz, dalgalıdır. Polinom regresyon bu eğrisel hareketi yakalayabilir."
-    )
+    # 7. KORELASYON
+    pdf.section_header(tr("7. KORELASYON ANALIZI"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Yaptigimiz korelasyon analizinde cok carpici bir sonuc ortaya cikti: Enerji tuketimi ve ekonomik buyume, emisyonlarla %90'in uzerinde bir iliskiye sahip. Bu durum, dunya genelinde hala ekonomik buyumenin cevre kirliligine bagimli oldugunu kanitliyor."))
+    pdf.tech_box(tr("SORU: HANGI KORELASYON YONTEMI?\n"
+                    "- YONTEM: Pearson Korelasyon Katsayisi.\n"
+                    "- NEDEN?: Degiskenlerimiz arasindaki iliski dogrusal (Lineer) oldugu icin Pearson en uygunydu. Sirali iliski olsaydi Spearman kullanirdik.\n"
+                    "- BULGU: GSYIH (0.92) ve Enerji (0.98) cok guclu pozitif iliski gosteriyor."))
 
-    # 7. Kişi Başına Emisyon
-    pdf.chapter_title("6. Nüfus Yoğunluğu ve Kişi Başına Düşen Emisyonlar")
-    pdf.chapter_body(
-        "Sunum Notu: Toplamda en çok kirleten Çin olsa da, kişi başına düşen emisyonda ABD hala liderdir. "
-        "Bu durum, gelişmiş ülkelerin bireysel tüketim alışkanlıklarının çevreye daha fazla zarar verdiğini gösterir.\n"
-        "Teknoloji: Feature Engineering (Özellik Mühendisliği).\n"
-        "Neden?: Toplam emisyon yanıltıcı olabilir. Toplam emisyonu nüfusa bölerek (CO2 / Population) adil bir kıyaslama metriği ürettik."
-    )
+    # 8. TAHMINLER
+    pdf.section_header(tr("8. TAHMINE DAYALI MODELLEME"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Gelecege yonelik tahminlerimiz, 2028 yilina kadar emisyon artisinin devam edecegini, ancak artis hizinin yavaslayacagini gosteriyor. Burada 'Iki Asamali' bir tahmin yontemi kullandik. Once nufus ve ekonomi verilerini tahmin ettik, sonra bu verileri ana modelimize vererek CO2 tahminini uretiik. Bu sayede sadece zamana bagli degil, ekonomik parametrelere bagli gercekci bir tahmin elde ettik."))
+    pdf.tech_box(tr("SORU: GELECEGI NASIL TAHMIN ETTINIZ? (TWO-STEP FORECASTING)\n"
+                    "- NEDEN?: Modelimiz GSYIH ve Nufusa bagli calisiyor. Ama 2026'nin GSYIH verisi elimizde yok. O yuzden once girdileri tahmin etmemiz gerekti.\n"
+                    "- NASIL? (Adim 1): 'Polinom Regresyon' (np.polyfit, derece=2) ile GSYIH'nin 2028'e kadarki egimini modelledik.\n"
+                    "- NASIL? (Adim 2): Tahmin edilen bu GSYIH degerlerini ana Lineer modelimize verdik."))
 
-    # 8. Demografik Büyüme vs Emisyon
-    pdf.chapter_title("7. Demografik Büyüme ve Emisyon İlişkisi")
-    pdf.chapter_body(
-        "Sunum Notu: Bu grafik, 'Decoupling' yani ayrışma başarısını gösterir. "
-        "ABD ve Almanya'da nüfus artmasına rağmen emisyonların azalması, doğru politikalarla büyümenin çevreyi kirletmeden de mümkün olduğunun kanıtıdır.\n"
-        "Teknoloji: Data Normalization (Endeksleme).\n"
-        "Neden?: Nüfus (milyar) ve CO2 (milyon ton) farklı birimlerdir. İkisini de başlangıç yılında 100'e eşitleyerek artış hızlarını kıyasladık."
-    )
+    # 9. KISI BASI ANALIZ
+    pdf.section_header(tr("9. KISI BASI EMISYON"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Burasi cok onemli bir ayrimi gosteriyor. Toplam emisyonlarda Cin lider olsa da, kisi basina dusen emisyonlarda ABD acik ara birincidir. Bu durum, sorunun sadece nufus degil, yasam tarzi ve tuketim aliskanliklari oldugunu net bir sekilde ortaya koyuyor."))
+    pdf.tech_box(tr("ANALITIK YONTEM:\n"
+                    "- Feature Engineering: `co2_per_capita` dogrudan veri setinde yoktu, biz turettik. (CO2 / Population)"))
 
-    # 9. Nüfus Ölçeği vs Kişi Başı
-    pdf.chapter_title("8. Nüfus Ölçeği ve Kişi Başına Emisyon Dinamikleri")
-    pdf.chapter_body(
-        "Sunum Notu: Nüfus büyüklüğü ile kirlilik arasında doğrudan bir bağ yoktur. "
-        "Çin, hem çok kalabalık hem de sanayileştiği için kişi başı emisyonu artmaktadır, bu da onu benzersiz bir örnek yapmaktadır.\n"
-        "Teknoloji: Scatter Plot (Dağılım Grafiği).\n"
-        "Neden?: Ülkelerin gelişmişlik seviyelerini gruplamak için."
-    )
+    # 10. DEMOGRAFIK DINAMIKLER
+    pdf.section_header(tr("10. DEMOGRAFIK DINAMIKLER"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Nufus ve emisyon iliskisini inceledigimizde, her ulkenin farkli bir hikayesi oldugunu goruyoruz. Ornegin Rusya'da nufus azalmasina ragmen emisyonlar dalgali seyrederken, Hindistan'da nufus ve emisyon birebir paralel ilerliyor."))
+    pdf.tech_box(tr("TEKNIK: NORMALIZASYON (INDEXING)\n"
+                    "- NEDEN?: Nufus (Milyar) ve CO2 (Milyon) farkli olceklerde. Ayni grafikte cizilemezler.\n"
+                    "- NASIL?: Hepsini 2004 yilina gore endeksleyip (Base=100) yuzdesel degisime donusturduk."))
 
-    # 10. Demografik Projeksiyonlar
-    pdf.chapter_title("9. Demografik Projeksiyonlar (2025-2028)")
-    pdf.chapter_body(
-        "Sunum Notu: CO2 tahminimizin temeli nüfustur. Çin nüfusunun zirve yapıp azalmaya başlayacak olması, "
-        "gelecekte emisyonların da doğal olarak düşüşe geçebileceğinin en güçlü sinyalidir.\n"
-        "Teknoloji: Time Series Forecasting (Zaman Serisi Tahmini).\n"
-        "Neden?: CO2 tahmin modelimizin ana girdisi nüfustur. Önce nüfusu tahmin ettik ki, bu veriyi CO2 modeline besleyebilelim."
-    )
+    # 11. ENERJI KARMASI
+    pdf.section_header(tr("11. ENERJI KARMASI"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Bu grafik ulkelerin enerji 'parmak izlerini' gosteriyor. Cin'in grafigindeki devasa siyah alan komur kullanimini, Rusya'daki mavi alan ise dogalgaz bagimliligini temsil ediyor. Turkiye ise ne yazik ki hala yuksek oranda fosil yakit bagimliligina sahip."))
+    pdf.tech_box(tr("GORSELLESTIRME:\n"
+                    "- Tur: Stacked Area Chart (Yigilmis Alan Grafigi) - `plt.stackplot`\n"
+                    "- NEDEN?: Toplam emisyonun hangi kaynaktan (komur, petrol, gaz) geldigini oransal gostermek icin."))
 
-    # 11. Nüfus Kaynaklı Etki
-    pdf.chapter_title("10. Nüfus Kaynaklı Emisyon Etki Analizi")
-    pdf.chapter_body(
-        "Sunum Notu: Eğer teknoloji hiç gelişmeseydi emisyonlar çok daha yüksek olacaktı. "
-        "Gerçek verinin simülasyondan düşük çıkması, enerji verimliliği ve yeşil teknolojilerin işe yaradığını ispatlıyor.\n"
-        "Teknoloji: Simulation (Simülasyon).\n"
-        "Neden?: Teknolojinin ve yeşil enerjinin etkisini ölçmek için."
-    )
+    # 12. POLITIKA ONERILERI
+    pdf.section_header(tr("12. SONUC VE POLITIKA ONERILERI"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Sonuc olarak, veriler bize 'Tek Tip' bir cozumun olamayacagini gosterdi. Analizlerimiz isiginda Turkiye icin acil olarak Gunes ve Ruzgar potansiyelinin degerlendirilmesini, Almanya icin ise komurden cikis surecinin hizlandirilmasini oneriyoruz."))
 
-    # 12. Fosil Yakıt Analizi
-    pdf.chapter_title("11. Fosil Yakıt Bağımlılığı")
-    pdf.chapter_body(
-        "Sunum Notu: Sorunun kaynağı ülkeye göre değişiyor: Çin'de kömür, Rusya'da doğalgaz, ABD'de ise petrol baskın. "
-        "Bu veri, her ülkeye neden farklı bir çözüm önerdiğimizin dayanağıdır.\n"
-        "Teknoloji: Data Aggregation (Veri Toplulaştırma).\n"
-        "Neden?: Sorunun kaynağını bulmadan çözüm öneremeyiz."
-    )
+    # 13. KAPINIS
+    pdf.section_header(tr("KAPANIS"))
+    pdf.content_block(tr("SUNUM METNI"), 
+                      tr("Beni dinlediginiz icin tesekkur ederim. Projenin kodlarina ve detayli raporuna GitHub reposundan erisebilirsiniz. Sorularinizi yanitlamaktan memnuniyet duyarim."))
 
-    # 13. Üretim vs Tüketim
-    pdf.chapter_title("12. Üretim ve Tüketim Temelli Emisyon Analizi")
-    pdf.chapter_body(
-        "Sunum Notu: Bu grafik, 'Karbon Sızıntısı' kavramını açıklar. Gelişmiş ülkeler (ABD, Almanya) emisyonlarını düşürmüş gibi görünse de, aslında kirli üretimi Çin gibi ülkelere taşımışlardır. "
-        "Yani kendi topraklarında temizler ama tükettikleri ürünler başka yerde dünyayı kirletmeye devam ediyor.\n"
-        "Teknoloji: Comparative Analysis (Karşılaştırmalı Analiz).\n"
-        "Neden?: Emisyon sorumluluğunun sadece üreticiye değil, tüketiciye de ait olduğunu göstermek için."
-    )
 
-    # 14. Karbon Yoğunluğu
-    pdf.chapter_title("13. Karbon Yoğunluğu Analizi (CO2 / GSYİH)")
-    pdf.chapter_body(
-        "Sunum Notu: Bu grafik ekonominin ne kadar 'Yeşil' olduğunu gösterir. Çin'in grafiğindeki sert düşüş, "
-        "ekonomisi büyürken artık daha az enerji harcadığını ve teknolojisini modernize ettiğini kanıtlıyor.\n"
-        "Teknoloji: Ratio Analysis (Oran Analizi).\n"
-        "Neden?: Sadece toplam emisyona bakmak haksızlık olur; ülkenin parayı ne kadar temiz kazandığına da bakmalıyız."
-    )
-
-    # 15. Stratejik Öneriler
-    pdf.chapter_title("14. Stratejik Öneriler")
-    pdf.chapter_body(
-        "Sunum Notu: Veri analizimiz sonucunda; Çin'e kömürü bırakmasını, ABD'ye ise bireysel tüketimi azaltmasını öneriyoruz. "
-        "Bu öneriler kişisel görüş değil, doğrudan emisyon kaynakları verisine dayalıdır.\n"
-        "Teknoloji: Data-Driven Insight (Veri Odaklı İçgörü).\n"
-        "Neden?: Analizin bir sonuca varması gerekir."
-    )
-
-    # 16. Sonuç
-    pdf.chapter_title("15. Sonuç ve Özet")
-    pdf.chapter_body(
-        "Sunum Notu: Sonuç olarak, 2028 projeksiyonları küresel bir dönüm noktasında olduğumuzu gösteriyor. "
-        "Gelişmiş ülkeler emisyonu düşürmeyi başardı, şimdi sıra gelişmekte olan ülkelerin temiz enerjiye geçişini hızlandırmakta."
-    )
-
-    pdf.output("Sunum_Rehberi.pdf")
-    print("Sunum rehberi oluşturuldu: Sunum_Rehberi.pdf")
+    pdf.output("Sunum_Rehberi_Profesyonel.pdf")
+    print("PDF Olusturuldu: Sunum_Rehberi_Profesyonel.pdf")
 
 if __name__ == "__main__":
-    create_presentation_guide()
+    create_guide()
