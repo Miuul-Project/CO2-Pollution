@@ -1,6 +1,26 @@
 
+import pandas as pd
 import plotly.express as px
 import os
+
+# Veri setini yükle
+try:
+    df = pd.read_csv("Datasets/owid-co2-data.csv")
+except FileNotFoundError:
+    df = pd.read_csv("Nature-Pollution/Datasets/owid-co2-data.csv")
+
+# df_eda hazırla - eksik değerleri doldur
+df_eda = df.sort_values(["country", "year"])
+cols_to_interpolate = ["co2", "co2_per_capita", "gdp", "population", "energy_per_capita"]
+cols_to_interpolate = [c for c in cols_to_interpolate if c in df_eda.columns]
+
+def fill_group(group):
+    group[cols_to_interpolate] = group[cols_to_interpolate].interpolate(
+        method="linear", limit_direction="both"
+    )
+    return group
+
+df_eda = df_eda.groupby("country", group_keys=False).apply(fill_group)
 
 def make_3d_globe_from_df_eda(
     df_eda: pd.DataFrame,
