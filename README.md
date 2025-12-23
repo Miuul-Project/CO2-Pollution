@@ -32,26 +32,31 @@ Bu proje, **Miuul Veri Bilimi Bootcamp** kapsamında 5 kişilik ekibimizle gerç
     <th>İsim</th>
     <th>LinkedIn</th>
     <th>GitHub</th>
+    <th>Website</th>
   </tr>
   <tr>
     <td><b>Alican Kaya</b></td>
     <td><a href="https://www.linkedin.com/in/alican-kaya-881650234/">LinkedIn</a></td>
     <td><a href="https://github.com/AlicanKaya192">GitHub</a></td>
+    <td><a href="https://alican-kaya.com/">🌐 Website</a></td>
   </tr>
   <tr>
     <td><b>Sude Şenol</b></td>
     <td><a href="https://www.linkedin.com/in/sude-%C5%9Fenol/">LinkedIn</a></td>
     <td><a href="https://github.com/sudesenoll">GitHub</a></td>
+    <td>—</td>
   </tr>
   <tr>
     <td><b>Zülal Özge</b></td>
     <td><a href="https://www.linkedin.com/in/z%C3%BClal-%C3%B6zge-687488333/">LinkedIn</a></td>
     <td><a href="https://github.com/zulalozge">GitHub</a></td>
+    <td>—</td>
   </tr>
   <tr>
     <td><b>Hasret Erdoğan</b></td>
     <td><a href="https://www.linkedin.com/in/hasret-erdo%C4%9Fan-5b463b278/">LinkedIn</a></td>
     <td><a href="https://github.com/hasreterdogan">GitHub</a></td>
+    <td>—</td>
   </tr>
   <tr>
     <td><b>Duru Bağdadioğlu</b></td>
