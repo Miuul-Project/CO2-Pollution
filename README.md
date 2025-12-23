@@ -62,6 +62,7 @@ Bu proje, **Miuul Veri Bilimi Bootcamp** kapsamında 5 kişilik ekibimizle gerç
     <td><b>Duru Bağdadioğlu</b></td>
     <td><a href="https://www.linkedin.com/in/duru-ba%C4%9Fdadio%C4%9Flu/">LinkedIn</a></td>
     <td><a href="https://github.com/durubagdadioglu">GitHub</a></td>
+    <td>—</td>
   </tr>
 </table>
 
